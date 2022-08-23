@@ -1,0 +1,20 @@
+{
+  "name": "ifc-three-js-viewer",
+  "version": "1.0.0",
+  "description": "This is a IFC wrapped on Three js based viewer, I think..",
+  "main": "app.js",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.js",
+    "watch": "rollup -w -c ./rollup.config.js"
+  },
+  "author": "Oussama Bonnor",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.135.0",
+    "web-ifc-three": "^0.0.119"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "rollup": "^2.78.1"
+  }
+}
