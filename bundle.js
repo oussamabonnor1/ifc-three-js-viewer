@@ -40597,6 +40597,112 @@ class InstancedInterleavedBuffer extends InterleavedBuffer {
 
 InstancedInterleavedBuffer.prototype.isInstancedInterleavedBuffer = true;
 
+class Raycaster {
+
+	constructor( origin, direction, near = 0, far = Infinity ) {
+
+		this.ray = new Ray( origin, direction );
+		// direction is assumed to be normalized (for accurate distance calculations)
+
+		this.near = near;
+		this.far = far;
+		this.camera = null;
+		this.layers = new Layers();
+
+		this.params = {
+			Mesh: {},
+			Line: { threshold: 1 },
+			LOD: {},
+			Points: { threshold: 1 },
+			Sprite: {}
+		};
+
+	}
+
+	set( origin, direction ) {
+
+		// direction is assumed to be normalized (for accurate distance calculations)
+
+		this.ray.set( origin, direction );
+
+	}
+
+	setFromCamera( coords, camera ) {
+
+		if ( camera && camera.isPerspectiveCamera ) {
+
+			this.ray.origin.setFromMatrixPosition( camera.matrixWorld );
+			this.ray.direction.set( coords.x, coords.y, 0.5 ).unproject( camera ).sub( this.ray.origin ).normalize();
+			this.camera = camera;
+
+		} else if ( camera && camera.isOrthographicCamera ) {
+
+			this.ray.origin.set( coords.x, coords.y, ( camera.near + camera.far ) / ( camera.near - camera.far ) ).unproject( camera ); // set origin in plane of camera
+			this.ray.direction.set( 0, 0, - 1 ).transformDirection( camera.matrixWorld );
+			this.camera = camera;
+
+		} else {
+
+			console.error( 'THREE.Raycaster: Unsupported camera type: ' + camera.type );
+
+		}
+
+	}
+
+	intersectObject( object, recursive = true, intersects = [] ) {
+
+		intersectObject( object, this, intersects, recursive );
+
+		intersects.sort( ascSort );
+
+		return intersects;
+
+	}
+
+	intersectObjects( objects, recursive = true, intersects = [] ) {
+
+		for ( let i = 0, l = objects.length; i < l; i ++ ) {
+
+			intersectObject( objects[ i ], this, intersects, recursive );
+
+		}
+
+		intersects.sort( ascSort );
+
+		return intersects;
+
+	}
+
+}
+
+function ascSort( a, b ) {
+
+	return a.distance - b.distance;
+
+}
+
+function intersectObject( object, raycaster, intersects, recursive ) {
+
+	if ( object.layers.test( raycaster.layers ) ) {
+
+		object.raycast( raycaster, intersects );
+
+	}
+
+	if ( recursive === true ) {
+
+		const children = object.children;
+
+		for ( let i = 0, l = children.length; i < l; i ++ ) {
+
+			intersectObject( children[ i ], raycaster, intersects, true );
+
+		}
+
+	}
+
+}
+
 /**
  * Ref: https://en.wikipedia.org/wiki/Spherical_coordinate_system
  *
@@ -103197,8 +103303,8 @@ const scene = new Scene();
 
 //Object to store the size of the viewport
 const size = {
-  width: window.innerWidth,
-  height: window.innerHeight,
+    width: window.innerWidth,
+    height: window.innerHeight,
 };
 
 //Creates the camera (point of view of the user)
@@ -103223,8 +103329,8 @@ scene.add(directionalLight.target);
 //Sets up the renderer, fetching the canvas of the HTML
 const threeCanvas = document.getElementById("three-canvas");
 const renderer = new WebGLRenderer({
-  canvas: threeCanvas,
-  alpha: true,
+    canvas: threeCanvas,
+    alpha: true,
 });
 
 renderer.setSize(size.width, size.height);
@@ -103244,37 +103350,70 @@ const controls = new OrbitControls(camera, threeCanvas);
 controls.enableDamping = true;
 controls.target.set(-2, 0, 0);
 
+const raycaster = new Raycaster();
+const pointer = new Vector2$1();
+raycaster.firstHitOnly = true;
+
+let measuringPoints = [];
+const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702 });
+var MAX_POINTS = 500;
+var positions = new Float32Array(MAX_POINTS * 3);
+let measuringLineGeometry = new BufferGeometry();
+measuringLineGeometry.addAttribute('position', new BufferAttribute$1(positions, 3));
+let measuringLine = new Line(measuringLineGeometry, measuringLineMaterial);
+scene.add(measuringLine);
+
+function onPointerClick(event) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+    measuringPoints.push(intersects[0].point);
+
+    var positions = measuringLine.geometry.attributes.position.array;
+    const count = measuringPoints.length * 3;
+    positions[count - 3] = intersects[0].point.x;
+    positions[count - 2] = intersects[0].point.y;
+    positions[count - 1] = intersects[0].point.z;
+    measuringLine.geometry.setDrawRange(0, measuringPoints.length);
+    measuringLine.geometry.attributes.position.needsUpdate = true;
+}
+
 //Animation loop
 const animate = () => {
-  controls.update();
-  renderer.render(scene, camera);
-  requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
 };
 
 animate();
 
 //Adjust the viewport to the size of the browser
 window.addEventListener("resize", () => {
-  size.width = window.innerWidth;
-  size.height = window.innerHeight;
-  camera.aspect = size.width / size.height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(size.width, size.height);
+    size.width = window.innerWidth;
+    size.height = window.innerHeight;
+    camera.aspect = size.width / size.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(size.width, size.height);
 });
+
+window.addEventListener('click', onPointerClick);
 
 
 // Sets up the IFC loading
 const ifcLoader = new IFCLoader();
+ifcLoader.load("models/01.ifc", (ifcModel) => scene.add(ifcModel));
 
 ifcLoader.ifcManager.setWasmPath("wasm/");
 
 const input = document.getElementById("file-input");
+
 input.addEventListener(
-  "change",
-  (changed) => {
-    const file = changed.target.files[0];
-    var ifcURL = URL.createObjectURL(file);
-    ifcLoader.load(ifcURL, (ifcModel) => scene.add(ifcModel));
-  },
-  false
+    "change",
+    (changed) => {
+        const file = changed.target.files[0];
+        var ifcURL = URL.createObjectURL(file);
+        ifcLoader.load(ifcURL, (ifcModel) => scene.add(ifcModel));
+    },
+    false
 );
