@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>IFC THREE VIEWER</title>
 </head>
+
 <body>
-    <input type="file" id="file-input" accept=".ifc, .ifcXML, .ifcZIP">
+    <header id="toolbox">
+        <label for="file-input" class="custom-file-upload custom-button">
+            <span class="custom-icon material-icons">upload</span>
+            <span class="tooltiptext">Use Your Model</span>
+        </label>
+        <input type="file" id="file-input" accept=".ifc, .ifcXML, .ifcZIP">
+        <label id="measuring-button" class="custom-button">
+            <span class="custom-icon material-icons">straighten</span>
+        </label>
+
+    </header>
     <canvas id="three-canvas"></canvas>
     <script src="bundle.js"></script>
 </body>
+
 </html>

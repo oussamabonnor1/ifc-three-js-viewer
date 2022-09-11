@@ -103499,8 +103499,30 @@ class IFCLoader extends Loader {
 
 }
 
+const measuringButton = document.getElementById("measuring-button");
+measuringButton.addEventListener("click", () => {
+    isMeasuring = !isMeasuring;
+    if (isMeasuring) {
+        measuringButton.classList.add('is-active');
+        measuringButton.children[0].classList.add('is-active');
+    } else {
+        measuringButton.classList.remove('is-active');
+        measuringButton.children[0].classList.remove('is-active');
+        const measuringLabels = document.querySelectorAll("measurementLabel");
+        measuringLabels.forEach(label => label.remove());
+        measuringEntities.forEach(entity => scene.remove(entity));
+        measuringPoints = [];
+        measuringLine.geometry.setDrawRange(0, measuringPoints.length);
+        measuringLine.geometry.attributes.position.needsUpdate = true;
+    }
+});
+
+let measuringEntities = [];
+let isMeasuring = false;
+
 //Creates the Three.js scene
 const scene = new Scene();
+let model;
 
 //Object to store the size of the viewport
 const size = {
@@ -103563,33 +103585,39 @@ const pointer = new Vector2$1();
 raycaster.firstHitOnly = true;
 
 let measuringPoints = [];
-const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702 });
+const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702, depthTest: false, depthWrite: false });
 var MAX_POINTS = 500;
 var positions = new Float32Array(MAX_POINTS * 3);
 let measuringLineGeometry = new BufferGeometry();
 measuringLineGeometry.setAttribute('position', new BufferAttribute$1(positions, 3));
 let measuringLine = new Line(measuringLineGeometry, measuringLineMaterial);
+measuringLine.renderOrder = 999;
 scene.add(measuringLine);
 
 function onPointerClick(event) {
-    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-    pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
-    const intersectionPoint = intersects[0].point;
-    measuringPoints.push(intersectionPoint);
-    console.log(measuringPoints);
-    addPointMeasuringLine(intersectionPoint);
-    addMeasuringLine(intersectionPoint);
-    if (measuringPoints.length > 1) addMeasuringLabel(measuringPoints[measuringPoints.length - 2], measuringPoints[measuringPoints.length - 1]);
+    if (isMeasuring) {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects([model]);
+        if (intersects.length > 0) {
+            const intersectionPoint = intersects[0].point;
+            measuringPoints.push(intersectionPoint);
+            addPointMeasuringLine(intersectionPoint);
+            addMeasuringLine(intersectionPoint);
+            if (measuringPoints.length > 1) addMeasuringLabel(measuringPoints[measuringPoints.length - 2], measuringPoints[measuringPoints.length - 1]);
+        }
+    }
 }
 
 function addPointMeasuringLine(point) {
     var dotGeometry = new BufferGeometry();
     dotGeometry.setAttribute('position', new BufferAttribute$1(new Float32Array([point.x, point.y, point.z]), 3));
-    var dotMaterial = new PointsMaterial({ size: 0.25, color: 0xF7C702 });
+    var dotMaterial = new PointsMaterial({ size: 0.25, color: 0xF7C702, depthTest: false, depthWrite: false });
     var dot = new Points(dotGeometry, dotMaterial);
+    dot.renderOrder = 999;
     scene.add(dot);
+    measuringEntities.push(dot);
 }
 
 function addMeasuringLine(point) {
@@ -103610,6 +103638,7 @@ function addMeasuringLabel(point1, point2) {
     measurementDiv.innerText = '0.0m';
     const measurementLabel = new CSS2DObject(measurementDiv);
     scene.add(measurementLabel);
+    measuringEntities.push(measurementLabel);
 
     const v0 = new Vector3$1(
         point1.x,
@@ -103653,7 +103682,10 @@ window.addEventListener('click', onPointerClick);
 
 // Sets up the IFC loading
 const ifcLoader = new IFCLoader();
-ifcLoader.load("models/01.ifc", (ifcModel) => scene.add(ifcModel));
+ifcLoader.load("models/01.ifc", (ifcModel) => {
+    model = ifcModel;
+    scene.add(ifcModel);
+});
 
 ifcLoader.ifcManager.setWasmPath("wasm/");
 
@@ -103664,7 +103696,11 @@ input.addEventListener(
     (changed) => {
         const file = changed.target.files[0];
         var ifcURL = URL.createObjectURL(file);
-        ifcLoader.load(ifcURL, (ifcModel) => scene.add(ifcModel));
+        scene.remove(model);
+        ifcLoader.load(ifcURL, (ifcModel) => {
+            model = ifcModel;
+            scene.add(ifcModel);
+        });
     },
     false
 );

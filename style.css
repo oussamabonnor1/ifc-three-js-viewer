@@ -1,35 +1,92 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: #242424;
-  }
-  
-  html,
-  body {
-    overflow: hidden;
-  }
-  
-  #three-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    outline: none;
-    z-index: 2;
-  }
-  
-  #file-input {
-    z-index: 3 !important;
-    position: absolute;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #242424;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: black;
+}
 
-  .measurementLabel {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 18px;
-      font-weight: 500;
-      background-color: white;
-      color: black;
-      padding: 4px;
-      border-radius: 4px;
-      z-index: 2 !important;
-  }
+html,
+body {
+  overflow: hidden;
+}
+
+#three-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  outline: none;
+  z-index: 2;
+}
+
+#toolbox {
+  z-index: 3 !important;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border-radius: 4px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.custom-icon {
+  color: black;
+  background-color: white;
+}
+.custom-icon.is-active {
+  color: white;
+  background-color: #2196F3;
+}
+
+.custom-button {
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.custom-button.is-active {
+  border: 1px solid #2196F3;
+  background-color: #2196F3;
+}
+
+/* Tooltip text */
+.custom-button .tooltiptext {
+  background-color: white;
+  visibility: hidden;
+  text-align: center;
+  width: 150px;
+  border-radius: 4px;
+  position: absolute;
+  top: 25%;
+  right: 110%;
+}
+.custom-button .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 35%;
+  left: 100%;
+  margin-left: -1px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent white;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.custom-button:hover .tooltiptext {
+  visibility: visible;
+}
+
+.measurementLabel {
+  background-color: white;
+  padding: 4px;
+  border-radius: 4px;
+  z-index: 2 !important;
+}
