@@ -38,6 +38,7 @@ input[type="file"] {
   color: black;
   background-color: white;
 }
+
 .custom-icon.is-active {
   color: white;
   background-color: #2196F3;
@@ -52,6 +53,7 @@ input[type="file"] {
   cursor: pointer;
   border-radius: 4px;
 }
+
 .custom-button.is-active {
   border: 1px solid #2196F3;
   background-color: #2196F3;
@@ -68,6 +70,7 @@ input[type="file"] {
   top: 25%;
   right: 110%;
 }
+
 .custom-button .tooltiptext::after {
   content: "";
   position: absolute;
@@ -89,4 +92,22 @@ input[type="file"] {
   padding: 4px;
   border-radius: 4px;
   z-index: 2 !important;
+}
+
+#model-info {
+  width: 15%;
+  max-height: 25%;
+  overflow: auto !important;
+  visibility: hidden;
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  z-index: 3 !important;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+#model-info.is-active {
+  visibility: visible !important;
 }

@@ -103501,24 +103501,26 @@ class IFCLoader extends Loader {
 
 const measuringButton = document.getElementById("measuring-button");
 measuringButton.addEventListener("click", () => {
-    isMeasuring = !isMeasuring;
-    if (isMeasuring) {
-        measuringButton.classList.add('is-active');
-        measuringButton.children[0].classList.add('is-active');
-    } else {
-        measuringButton.classList.remove('is-active');
-        measuringButton.children[0].classList.remove('is-active');
-        const measuringLabels = document.querySelectorAll("measurementLabel");
-        measuringLabels.forEach(label => label.remove());
-        measuringEntities.forEach(entity => scene.remove(entity));
-        measuringPoints = [];
-        measuringLine.geometry.setDrawRange(0, measuringPoints.length);
-        measuringLine.geometry.attributes.position.needsUpdate = true;
-    }
+    selectedTool = selectedTool == AVAILABLE_TOOLS.measuring ? undefined : AVAILABLE_TOOLS.measuring;
+    toggleMeasuring();
+    togglePicking();
 });
 
+const pickingButton = document.getElementById("picking-button");
+pickingButton.addEventListener("click", () => {
+    selectedTool = selectedTool == AVAILABLE_TOOLS.picking ? undefined : AVAILABLE_TOOLS.picking;
+    togglePicking();
+    toggleMeasuring();
+});
+
+const modelInfo = document.getElementById("model-info");
+
 let measuringEntities = [];
-let isMeasuring = false;
+const AVAILABLE_TOOLS = {
+    measuring: "measuring",
+    picking: "picking",
+};
+let selectedTool = undefined;
 
 //Creates the Three.js scene
 const scene = new Scene();
@@ -103605,11 +103607,9 @@ let measuringLine = new Line(measuringLineGeometry, measuringLineMaterial);
 measuringLine.renderOrder = 999;
 scene.add(measuringLine);
 
-threeCanvas.ondblclick = pickModelPart;
-
 function onPointerClick(event) {
     const intersects = castRay(event);
-    if (isMeasuring) {
+    if (selectedTool == AVAILABLE_TOOLS.measuring) {
         if (intersects.length > 0) {
             const intersectionPoint = intersects[0].point;
             measuringPoints.push(intersectionPoint);
@@ -103617,6 +103617,9 @@ function onPointerClick(event) {
             addMeasuringLine(intersectionPoint);
             if (measuringPoints.length > 1) addMeasuringLabel(measuringPoints[measuringPoints.length - 2], measuringPoints[measuringPoints.length - 1]);
         }
+    }
+    if (selectedTool == AVAILABLE_TOOLS.picking) {
+        pickModelPart(event);
     }
 }
 
@@ -103668,7 +103671,7 @@ function addMeasuringLabel(point1, point2) {
 }
 
 function highlightModelPart(event, material, model) {
-    if (!isMeasuring) {
+    if (!selectedTool) {
         const found = castRay(event)[0];
         const ifc = ifcLoader.ifcManager;
         if (found) {
@@ -103695,14 +103698,25 @@ function highlightModelPart(event, material, model) {
     }
 }
 
-function pickModelPart(event) {
-    const intersects = castRay(event)[0];
-    if (intersects) {
-        const index = intersects.faceIndex;
-        const geometry = intersects.object.geometry;
+async function pickModelPart(event) {
+    const found = castRay(event)[0];
+    if (found) {
+        const index = found.faceIndex;
+        const geometry = found.object.geometry;
         const ifc = ifcLoader.ifcManager;
         const id = ifc.getExpressId(geometry, index);
-        console.log(id);
+        if(previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+        previousSelectionID.id = found.object.modelID;
+        ifcLoader.ifcManager.createSubset({
+            modelID: previousSelectionID.id,
+            ids: [id],
+            material: selectionMaterial,
+            scene: scene,
+            removePrevious: true,
+        });
+        await ifc.getItemProperties(previousSelectionID.id, id).then(res => {
+            modelInfo.innerHTML = JSON.stringify(res, null, 2);
+        });
     }
 }
 
@@ -103711,6 +103725,37 @@ function castRay(event) {
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     return raycaster.intersectObjects([model]);
+}
+
+function toggleMeasuring() {
+    if (selectedTool == AVAILABLE_TOOLS.measuring) {
+        measuringButton.classList.add('is-active');
+        measuringButton.children[0].classList.add('is-active');
+    } else {
+        measuringButton.classList.remove('is-active');
+        measuringButton.children[0].classList.remove('is-active');
+        const measuringLabels = document.querySelectorAll("measurementLabel");
+        measuringLabels.forEach(label => label.remove());
+        measuringEntities.forEach(entity => scene.remove(entity));
+        measuringPoints = [];
+        measuringLine.geometry.setDrawRange(0, measuringPoints.length);
+        measuringLine.geometry.attributes.position.needsUpdate = true;
+    }
+}
+
+function togglePicking() {
+    if (selectedTool == AVAILABLE_TOOLS.picking) {
+        modelInfo.classList.add('is-active');
+        pickingButton.classList.add('is-active');
+        pickingButton.children[0].classList.add('is-active');
+        modelInfo.innerHTML = "Click a part of the model to show it's meta-data";
+    } else {
+        modelInfo.classList.remove('is-active');
+        pickingButton.classList.remove('is-active');
+        pickingButton.children[0].classList.remove('is-active');
+        const ifc = ifcLoader.ifcManager;
+        if(previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+    }
 }
 
 //Animation loop
