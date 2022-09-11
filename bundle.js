@@ -103584,6 +103584,17 @@ const raycaster = new Raycaster();
 const pointer = new Vector2$1();
 raycaster.firstHitOnly = true;
 
+// Creates subset material
+const selectionMaterial = new MeshLambertMaterial({
+    transparent: true,
+    opacity: 0.6,
+    color: 0xF7C702,
+    depthTest: false,
+});
+
+// Reference to the previous selection
+let previousSelectionID = { id: -1 };
+
 let measuringPoints = [];
 const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702, depthTest: false, depthWrite: false });
 var MAX_POINTS = 500;
@@ -103594,12 +103605,11 @@ let measuringLine = new Line(measuringLineGeometry, measuringLineMaterial);
 measuringLine.renderOrder = 999;
 scene.add(measuringLine);
 
+threeCanvas.ondblclick = pickModelPart;
+
 function onPointerClick(event) {
+    const intersects = castRay(event);
     if (isMeasuring) {
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
-        raycaster.setFromCamera(pointer, camera);
-        const intersects = raycaster.intersectObjects([model]);
         if (intersects.length > 0) {
             const intersectionPoint = intersects[0].point;
             measuringPoints.push(intersectionPoint);
@@ -103657,6 +103667,52 @@ function addMeasuringLabel(point1, point2) {
     measurementLabel.position.lerpVectors(v0, v1, 0.5);
 }
 
+function highlightModelPart(event, material, model) {
+    if (!isMeasuring) {
+        const found = castRay(event)[0];
+        const ifc = ifcLoader.ifcManager;
+        if (found) {
+            // Gets model ID
+            model.id = found.object.modelID;
+
+            // Gets Express ID
+            const index = found.faceIndex;
+            const geometry = found.object.geometry;
+            const id = ifc.getExpressId(geometry, index);
+
+            // Creates subset
+            ifcLoader.ifcManager.createSubset({
+                modelID: model.id,
+                ids: [id],
+                material: material,
+                scene: scene,
+                removePrevious: true,
+            });
+        } else {
+            // Removes previous highlight
+            ifc.removeSubset(model.id, material);
+        }
+    }
+}
+
+function pickModelPart(event) {
+    const intersects = castRay(event)[0];
+    if (intersects) {
+        const index = intersects.faceIndex;
+        const geometry = intersects.object.geometry;
+        const ifc = ifcLoader.ifcManager;
+        const id = ifc.getExpressId(geometry, index);
+        console.log(id);
+    }
+}
+
+function castRay(event) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    return raycaster.intersectObjects([model]);
+}
+
 //Animation loop
 const animate = () => {
     controls.update();
@@ -103679,6 +103735,7 @@ window.addEventListener("resize", () => {
 
 window.addEventListener('click', onPointerClick);
 
+window.addEventListener("mousemove", (event) => highlightModelPart(event, selectionMaterial, previousSelectionID));
 
 // Sets up the IFC loading
 const ifcLoader = new IFCLoader();
@@ -103688,6 +103745,9 @@ ifcLoader.load("models/01.ifc", (ifcModel) => {
 });
 
 ifcLoader.ifcManager.setWasmPath("wasm/");
+
+// Sets up optimized picking
+ifcLoader.ifcManager.setupThreeMeshBVH(computeBoundsTree, disposeBoundsTree, acceleratedRaycast);
 
 const input = document.getElementById("file-input");
 
