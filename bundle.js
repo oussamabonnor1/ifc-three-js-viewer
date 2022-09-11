@@ -40897,7 +40897,7 @@ class Line3 {
 
 }
 
-const _vector$2 = /*@__PURE__*/ new Vector3$1();
+const _vector$2$1 = /*@__PURE__*/ new Vector3$1();
 const _boneMatrix = /*@__PURE__*/ new Matrix4();
 const _matrixWorldInv = /*@__PURE__*/ new Matrix4();
 
@@ -40965,12 +40965,12 @@ class SkeletonHelper extends LineSegments {
 			if ( bone.parent && bone.parent.isBone ) {
 
 				_boneMatrix.multiplyMatrices( _matrixWorldInv, bone.matrixWorld );
-				_vector$2.setFromMatrixPosition( _boneMatrix );
-				position.setXYZ( j, _vector$2.x, _vector$2.y, _vector$2.z );
+				_vector$2$1.setFromMatrixPosition( _boneMatrix );
+				position.setXYZ( j, _vector$2$1.x, _vector$2$1.y, _vector$2$1.z );
 
 				_boneMatrix.multiplyMatrices( _matrixWorldInv, bone.parent.matrixWorld );
-				_vector$2.setFromMatrixPosition( _boneMatrix );
-				position.setXYZ( j + 1, _vector$2.x, _vector$2.y, _vector$2.z );
+				_vector$2$1.setFromMatrixPosition( _boneMatrix );
+				position.setXYZ( j + 1, _vector$2$1.x, _vector$2$1.y, _vector$2$1.z );
 
 				j += 2;
 
@@ -43900,6 +43900,207 @@ class OrbitControls extends EventDispatcher {
 		// force an update at start
 
 		this.update();
+
+	}
+
+}
+
+class CSS2DObject extends Object3D {
+
+	constructor( element = document.createElement( 'div' ) ) {
+
+		super();
+
+		this.element = element;
+
+		this.element.style.position = 'absolute';
+		this.element.style.userSelect = 'none';
+
+		this.element.setAttribute( 'draggable', false );
+
+		this.addEventListener( 'removed', function () {
+
+			this.traverse( function ( object ) {
+
+				if ( object.element instanceof Element && object.element.parentNode !== null ) {
+
+					object.element.parentNode.removeChild( object.element );
+
+				}
+
+			} );
+
+		} );
+
+	}
+
+	copy( source, recursive ) {
+
+		super.copy( source, recursive );
+
+		this.element = source.element.cloneNode( true );
+
+		return this;
+
+	}
+
+}
+
+CSS2DObject.prototype.isCSS2DObject = true;
+
+//
+
+const _vector$2 = new Vector3$1();
+const _viewMatrix = new Matrix4();
+const _viewProjectionMatrix = new Matrix4();
+const _a = new Vector3$1();
+const _b = new Vector3$1();
+
+class CSS2DRenderer {
+
+	constructor( parameters = {} ) {
+
+		const _this = this;
+
+		let _width, _height;
+		let _widthHalf, _heightHalf;
+
+		const cache = {
+			objects: new WeakMap()
+		};
+
+		const domElement = parameters.element !== undefined ? parameters.element : document.createElement( 'div' );
+
+		domElement.style.overflow = 'hidden';
+
+		this.domElement = domElement;
+
+		this.getSize = function () {
+
+			return {
+				width: _width,
+				height: _height
+			};
+
+		};
+
+		this.render = function ( scene, camera ) {
+
+			if ( scene.autoUpdate === true ) scene.updateMatrixWorld();
+			if ( camera.parent === null ) camera.updateMatrixWorld();
+
+			_viewMatrix.copy( camera.matrixWorldInverse );
+			_viewProjectionMatrix.multiplyMatrices( camera.projectionMatrix, _viewMatrix );
+
+			renderObject( scene, scene, camera );
+			zOrder( scene );
+
+		};
+
+		this.setSize = function ( width, height ) {
+
+			_width = width;
+			_height = height;
+
+			_widthHalf = _width / 2;
+			_heightHalf = _height / 2;
+
+			domElement.style.width = width + 'px';
+			domElement.style.height = height + 'px';
+
+		};
+
+		function renderObject( object, scene, camera ) {
+
+			if ( object.isCSS2DObject ) {
+
+				object.onBeforeRender( _this, scene, camera );
+
+				_vector$2.setFromMatrixPosition( object.matrixWorld );
+				_vector$2.applyMatrix4( _viewProjectionMatrix );
+
+				const element = object.element;
+
+				if ( /apple/i.test( navigator.vendor ) ) {
+
+					// https://github.com/mrdoob/three.js/issues/21415
+					element.style.transform = 'translate(-50%,-50%) translate(' + Math.round( _vector$2.x * _widthHalf + _widthHalf ) + 'px,' + Math.round( - _vector$2.y * _heightHalf + _heightHalf ) + 'px)';
+
+				} else {
+
+					element.style.transform = 'translate(-50%,-50%) translate(' + ( _vector$2.x * _widthHalf + _widthHalf ) + 'px,' + ( - _vector$2.y * _heightHalf + _heightHalf ) + 'px)';
+
+				}
+
+				element.style.display = ( object.visible && _vector$2.z >= - 1 && _vector$2.z <= 1 ) ? '' : 'none';
+
+				const objectData = {
+					distanceToCameraSquared: getDistanceToSquared( camera, object )
+				};
+
+				cache.objects.set( object, objectData );
+
+				if ( element.parentNode !== domElement ) {
+
+					domElement.appendChild( element );
+
+				}
+
+				object.onAfterRender( _this, scene, camera );
+
+			}
+
+			for ( let i = 0, l = object.children.length; i < l; i ++ ) {
+
+				renderObject( object.children[ i ], scene, camera );
+
+			}
+
+		}
+
+		function getDistanceToSquared( object1, object2 ) {
+
+			_a.setFromMatrixPosition( object1.matrixWorld );
+			_b.setFromMatrixPosition( object2.matrixWorld );
+
+			return _a.distanceToSquared( _b );
+
+		}
+
+		function filterAndFlatten( scene ) {
+
+			const result = [];
+
+			scene.traverse( function ( object ) {
+
+				if ( object.isCSS2DObject ) result.push( object );
+
+			} );
+
+			return result;
+
+		}
+
+		function zOrder( scene ) {
+
+			const sorted = filterAndFlatten( scene ).sort( function ( a, b ) {
+
+				const distanceA = cache.objects.get( a ).distanceToCameraSquared;
+				const distanceB = cache.objects.get( b ).distanceToCameraSquared;
+
+				return distanceA - distanceB;
+
+			} );
+
+			const zMax = sorted.length;
+
+			for ( let i = 0, l = sorted.length; i < l; i ++ ) {
+
+				sorted[ i ].element.style.zIndex = zMax - i;
+
+			}
+
+		}
 
 	}
 
@@ -103336,6 +103537,13 @@ const renderer = new WebGLRenderer({
 renderer.setSize(size.width, size.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
 //Creates grids and axes in the scene
 const grid = new GridHelper(50, 30);
 scene.add(grid);
@@ -103359,7 +103567,7 @@ const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702 });
 var MAX_POINTS = 500;
 var positions = new Float32Array(MAX_POINTS * 3);
 let measuringLineGeometry = new BufferGeometry();
-measuringLineGeometry.addAttribute('position', new BufferAttribute$1(positions, 3));
+measuringLineGeometry.setAttribute('position', new BufferAttribute$1(positions, 3));
 let measuringLine = new Line(measuringLineGeometry, measuringLineMaterial);
 scene.add(measuringLine);
 
@@ -103368,21 +103576,63 @@ function onPointerClick(event) {
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(scene.children);
-    measuringPoints.push(intersects[0].point);
+    const intersectionPoint = intersects[0].point;
+    measuringPoints.push(intersectionPoint);
+    console.log(measuringPoints);
+    addPointMeasuringLine(intersectionPoint);
+    addMeasuringLine(intersectionPoint);
+    if (measuringPoints.length > 1) addMeasuringLabel(measuringPoints[measuringPoints.length - 2], measuringPoints[measuringPoints.length - 1]);
+}
 
+function addPointMeasuringLine(point) {
+    var dotGeometry = new BufferGeometry();
+    dotGeometry.setAttribute('position', new BufferAttribute$1(new Float32Array([point.x, point.y, point.z]), 3));
+    var dotMaterial = new PointsMaterial({ size: 0.25, color: 0xF7C702 });
+    var dot = new Points(dotGeometry, dotMaterial);
+    scene.add(dot);
+}
+
+function addMeasuringLine(point) {
     var positions = measuringLine.geometry.attributes.position.array;
     const count = measuringPoints.length * 3;
-    positions[count - 3] = intersects[0].point.x;
-    positions[count - 2] = intersects[0].point.y;
-    positions[count - 1] = intersects[0].point.z;
+    positions[count - 3] = point.x;
+    positions[count - 2] = point.y;
+    positions[count - 1] = point.z;
     measuringLine.geometry.setDrawRange(0, measuringPoints.length);
     measuringLine.geometry.attributes.position.needsUpdate = true;
+}
+
+function addMeasuringLabel(point1, point2) {
+    const measurementDiv = document.createElement(
+        'div'
+    );
+    measurementDiv.className = 'measurementLabel';
+    measurementDiv.innerText = '0.0m';
+    const measurementLabel = new CSS2DObject(measurementDiv);
+    scene.add(measurementLabel);
+
+    const v0 = new Vector3$1(
+        point1.x,
+        point1.y,
+        point1.z
+    );
+    const v1 = new Vector3$1(
+        point2.x,
+        point2.y,
+        point2.z
+    );
+
+    const distance = v0.distanceTo(v1);
+    measurementLabel.element.innerText =
+        distance.toFixed(2) + 'm';
+    measurementLabel.position.lerpVectors(v0, v1, 0.5);
 }
 
 //Animation loop
 const animate = () => {
     controls.update();
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
     requestAnimationFrame(animate);
 };
 
@@ -103395,6 +103645,7 @@ window.addEventListener("resize", () => {
     camera.aspect = size.width / size.height;
     camera.updateProjectionMatrix();
     renderer.setSize(size.width, size.height);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 window.addEventListener('click', onPointerClick);

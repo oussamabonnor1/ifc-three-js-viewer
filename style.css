@@ -15,9 +15,21 @@
     top: 0;
     left: 0;
     outline: none;
+    z-index: 2;
   }
   
   #file-input {
-    z-index: 1;
+    z-index: 3 !important;
     position: absolute;
+  }
+
+  .measurementLabel {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      background-color: white;
+      color: black;
+      padding: 4px;
+      border-radius: 4px;
+      z-index: 2 !important;
   }
