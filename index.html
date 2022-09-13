@@ -17,16 +17,27 @@
             <span class="tooltiptext">Use Your Model</span>
         </label>
         <input type="file" id="file-input" accept=".ifc, .ifcXML, .ifcZIP">
-        <label id="measuring-button" class="custom-button">
+        <label id="measuring-button" class="custom-button" title="Measuring">
             <span class="custom-icon material-icons">straighten</span>
         </label>
-        <label id="picking-button" class="custom-button">
+        <label id="picking-button" class="custom-button" title="Selection">
             <span class="custom-icon material-icons">info</span>
+        </label>
+        <label id="annotating-button" class="custom-button" title="Annotation">
+            <span class="custom-icon material-icons">comment</span>
         </label>
 
     </header>
     <canvas id="three-canvas"></canvas>
     <div id="model-info"></div>
+    <div id="annotation-hint"></div>
+    <div id="annotation-display">Tag Data</div>
+    <div id="annotation-form">
+        <textarea name="comment" id="annotation-comment" cols="20" rows="5"></textarea>
+        <button id="save-annotation-button">
+            <span class="material-icons" style="color: white; float: left;">save</span> ADD TAG
+        </button>
+    </div>
     <script src="bundle.js"></script>
 </body>
 

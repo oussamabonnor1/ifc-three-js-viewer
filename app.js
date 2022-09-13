@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, BufferAttribute, BufferGeometry, DirectionalLight, GridHelper, Line, LineBasicMaterial, PerspectiveCamera, Points, PointsMaterial, Raycaster, Scene, Vector2, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, BufferAttribute, BufferGeometry, DirectionalLight, GridHelper, Line, LineBasicMaterial, PerspectiveCamera, Points, PointsMaterial, Raycaster, Scene, Sprite, SpriteMaterial, TextureLoader, Vector2, Vector3, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
     CSS2DRenderer,
@@ -13,6 +13,7 @@ measuringButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.measuring ? undefined : AVAILABLE_TOOLS.measuring
     toggleMeasuring()
     togglePicking()
+    toggleAnnotating()
 })
 
 const pickingButton = document.getElementById("picking-button")
@@ -20,14 +21,38 @@ pickingButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.picking ? undefined : AVAILABLE_TOOLS.picking
     togglePicking()
     toggleMeasuring()
+    toggleAnnotating()
+})
+
+const annotatingButton = document.getElementById("annotating-button")
+annotatingButton.addEventListener("click", () => {
+    selectedTool = selectedTool == AVAILABLE_TOOLS.annotating ? undefined : AVAILABLE_TOOLS.annotating
+    toggleAnnotating()
+    togglePicking()
+    toggleMeasuring()
 })
 
 const modelInfo = document.getElementById("model-info")
+const annotationHint = document.getElementById("annotation-hint")
+const annotationForm = document.getElementById("annotation-form")
+const annotationTextField = document.getElementById("annotation-comment")
+const annotationSaveButton = document.getElementById("save-annotation-button")
+const annotationDisplay = document.getElementById('annotation-display')
 
+annotationSaveButton.addEventListener("click", () => {
+    isCreatingAnnotation = false
+    annotationForm.classList.remove('is-active')
+    annotationPoints[annotationPoints.length - 1].name = annotationTextField.value
+    annotationTextField.value = ""
+})
+
+let isCreatingAnnotation = false
+let isAnnotationDisplayShown = false
 let measuringEntities = []
 const AVAILABLE_TOOLS = {
     measuring: "measuring",
     picking: "picking",
+    annotating: "annotating",
 }
 let selectedTool = undefined
 
@@ -106,6 +131,8 @@ const selectionMaterial = new MeshLambertMaterial({
 // Reference to the previous selection
 let previousSelectionID = { id: -1 };
 
+let annotationPoints = [];
+
 let measuringPoints = [];
 const measuringLineMaterial = new LineBasicMaterial({ color: 0xF7C702, depthTest: false, depthWrite: false });
 var MAX_POINTS = 500;
@@ -117,7 +144,7 @@ measuringLine.renderOrder = 999
 scene.add(measuringLine);
 
 function onPointerClick(event) {
-    const intersects = castRay(event)
+    const intersects = castRay(event, model)
     if (selectedTool == AVAILABLE_TOOLS.measuring) {
         if (intersects.length > 0) {
             const intersectionPoint = intersects[0].point
@@ -129,6 +156,34 @@ function onPointerClick(event) {
     }
     if (selectedTool == AVAILABLE_TOOLS.picking) {
         pickModelPart(event)
+    }
+    if (selectedTool == AVAILABLE_TOOLS.annotating) {
+        if (intersects.length > 0 && !isCreatingAnnotation) {
+            const intersectionPoint = intersects[0].point
+            addAnnotationPoint(intersectionPoint)
+        }
+    }
+}
+
+function onPointerMove(event) {
+    if (!selectedTool) {
+        highlightModelPart(event, selectionMaterial, previousSelectionID)
+    }
+    if (selectedTool == AVAILABLE_TOOLS.annotating && annotationPoints.length > 0) {
+        let found = castRay(event, ...annotationPoints)[0]
+        if (found && !isCreatingAnnotation) {
+            found = found.object
+            let position = found.position.clone().project(camera)
+            annotationDisplay.style.top = ((position.y * -1 + 1) * size.height / 2) + 'px'
+            annotationDisplay.style.left = ((position.x + 1) * size.width / 2) + 'px'
+            annotationDisplay.classList.add('is-active')
+            annotationDisplay.innerHTML = found.name
+            isAnnotationDisplayShown = true
+            console.log(((position.y * -1 + 1) * size.height / 2) + 'px');
+        } else if (isAnnotationDisplayShown) {
+            isAnnotationDisplayShown = false
+            annotationDisplay.classList.remove('is-active')
+        }
     }
 }
 
@@ -179,42 +234,40 @@ function addMeasuringLabel(point1, point2) {
     measurementLabel.position.lerpVectors(v0, v1, 0.5)
 }
 
-function highlightModelPart(event, material, model) {
-    if (!selectedTool) {
-        const found = castRay(event)[0];
-        const ifc = ifcLoader.ifcManager;
-        if (found) {
-            // Gets model ID
-            model.id = found.object.modelID;
+function highlightModelPart(event, material, previousSelectionID) {
+    const found = castRay(event, model)[0];
+    const ifc = ifcLoader.ifcManager;
+    if (found) {
+        // Gets model ID
+        previousSelectionID.id = found.object.modelID;
 
-            // Gets Express ID
-            const index = found.faceIndex;
-            const geometry = found.object.geometry;
-            const id = ifc.getExpressId(geometry, index);
+        // Gets Express ID
+        const index = found.faceIndex;
+        const geometry = found.object.geometry;
+        const id = ifc.getExpressId(geometry, index);
 
-            // Creates subset
-            ifcLoader.ifcManager.createSubset({
-                modelID: model.id,
-                ids: [id],
-                material: material,
-                scene: scene,
-                removePrevious: true,
-            });
-        } else {
-            // Removes previous highlight
-            ifc.removeSubset(model.id, material);
-        }
+        // Creates subset
+        ifcLoader.ifcManager.createSubset({
+            modelID: previousSelectionID.id,
+            ids: [id],
+            material: material,
+            scene: scene,
+            removePrevious: true,
+        });
+    } else {
+        // Removes previous highlight
+        ifc.removeSubset(previousSelectionID.id, material);
     }
 }
 
 async function pickModelPart(event) {
-    const found = castRay(event)[0]
+    const found = castRay(event, model)[0]
     if (found) {
         const index = found.faceIndex;
         const geometry = found.object.geometry;
         const ifc = ifcLoader.ifcManager;
         const id = ifc.getExpressId(geometry, index);
-        if(previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+        if (previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
         previousSelectionID.id = found.object.modelID;
         ifcLoader.ifcManager.createSubset({
             modelID: previousSelectionID.id,
@@ -225,15 +278,28 @@ async function pickModelPart(event) {
         });
         await ifc.getItemProperties(previousSelectionID.id, id).then(res => {
             modelInfo.innerHTML = JSON.stringify(res, null, 2);
+            modelInfo.style.whiteSpace = "pre"
         });
     }
 }
 
-function castRay(event) {
+function addAnnotationPoint(point) {
+    isCreatingAnnotation = true;
+    let map = new TextureLoader().load('static/info.png');
+    let material = new SpriteMaterial({ map: map, depthTest: false, depthWrite: false });
+    let sprite = new Sprite(material);
+    sprite.position.copy(point.clone());
+    sprite.renderOrder = 999;
+    scene.add(sprite);
+    annotationPoints.push(sprite);
+    annotationForm.classList.add('is-active')
+}
+
+function castRay(event, target) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
-    return raycaster.intersectObjects([model]);
+    return raycaster.intersectObjects([target]);
 }
 
 function toggleMeasuring() {
@@ -257,13 +323,32 @@ function togglePicking() {
         modelInfo.classList.add('is-active')
         pickingButton.classList.add('is-active')
         pickingButton.children[0].classList.add('is-active')
+        modelInfo.style.whiteSpace = "inherit"
         modelInfo.innerHTML = "Click a part of the model to show it's meta-data"
     } else {
         modelInfo.classList.remove('is-active')
         pickingButton.classList.remove('is-active')
         pickingButton.children[0].classList.remove('is-active')
         const ifc = ifcLoader.ifcManager;
-        if(previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+        if (previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+    }
+}
+
+function toggleAnnotating() {
+    if (selectedTool == AVAILABLE_TOOLS.annotating) {
+        annotationHint.classList.add('is-active')
+        if (isCreatingAnnotation)
+            annotationForm.classList.add('is-active')
+        annotatingButton.classList.add('is-active')
+        annotatingButton.children[0].classList.add('is-active')
+        annotationHint.innerHTML = "Click a part of the model to tag it"
+        annotationPoints.forEach(point => point.visible = true)
+    } else {
+        annotationHint.classList.remove('is-active')
+        annotationForm.classList.remove('is-active')
+        annotatingButton.classList.remove('is-active')
+        annotatingButton.children[0].classList.remove('is-active')
+        annotationPoints.forEach(point => point.visible = false)
     }
 }
 
@@ -289,7 +374,7 @@ window.addEventListener("resize", () => {
 
 window.addEventListener('click', onPointerClick);
 
-window.addEventListener("mousemove", (event) => highlightModelPart(event, selectionMaterial, previousSelectionID));
+window.addEventListener("mousemove", onPointerMove);
 
 // Sets up the IFC loading
 const ifcLoader = new IFCLoader();

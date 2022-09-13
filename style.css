@@ -95,8 +95,8 @@ input[type="file"] {
 }
 
 #model-info {
-  width: 15%;
-  max-height: 25%;
+  width: 25%;
+  max-height: 100%;
   overflow: auto !important;
   visibility: hidden;
   background-color: white;
@@ -105,9 +105,85 @@ input[type="file"] {
   z-index: 3 !important;
   position: absolute;
   top: 10px;
-  left: 10px;
+  left: 0px;
 }
 
 #model-info.is-active {
   visibility: visible !important;
+}
+
+#annotation-hint {
+  text-align: center;
+  visibility: hidden;
+  color: white;
+  border: 2px solid white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  z-index: 3 !important;
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+#annotation-hint.is-active {
+  visibility: visible !important;
+}
+
+#annotation-form {
+  display: grid;
+  text-align: center;
+  visibility: hidden;
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  z-index: 3 !important;
+  position: absolute;
+  right: 10px;
+  top: 60px;
+}
+
+#annotation-comment{
+  grid-column: 1;
+  grid-row: 1;
+  background-color: white;
+  border-radius: 10px 10px 0px 0px;
+  color: black;
+  border: 2px solid black;
+  margin-bottom: 6px;
+  text-align: center;
+  resize: none;
+}
+#save-annotation-button{
+  grid-column: 1;
+  grid-row: 2;
+  background-color: #242424;
+  border-radius: 6px;
+  color: white;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+#annotation-form.is-active {
+  visibility: visible !important;
+}
+
+#annotation-display{
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: white;
+  border: 2px solid black;
+  border-radius: 4px;
+  padding: 10px;
+  transition: opacity 0.3s, transform 0.3s;
+  opacity: 0;
+  transform: translate(-50%,-180%);
+  z-index: 3 !important;
+}
+#annotation-display.is-active{
+  opacity: 1;
+  transform: translate(-50%,calc(-160%));
 }
