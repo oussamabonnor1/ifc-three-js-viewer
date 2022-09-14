@@ -37,12 +37,21 @@ const annotationHint = document.getElementById("annotation-hint")
 const annotationForm = document.getElementById("annotation-form")
 const annotationTextField = document.getElementById("annotation-comment")
 const annotationSaveButton = document.getElementById("save-annotation-button")
+const annotationCancelButton = document.getElementById("cancel-annotation-button")
 const annotationDisplay = document.getElementById('annotation-display')
 
 annotationSaveButton.addEventListener("click", () => {
     isCreatingAnnotation = false
     annotationForm.classList.remove('is-active')
     annotationPoints[annotationPoints.length - 1].name = annotationTextField.value
+    annotationTextField.value = ""
+})
+
+annotationCancelButton.addEventListener("click", () => {
+    isCreatingAnnotation = false
+    annotationForm.classList.remove('is-active')
+    scene.remove(annotationPoints[annotationPoints.length - 1])
+    annotationPoints.pop()
     annotationTextField.value = ""
 })
 
@@ -170,8 +179,11 @@ function onPointerMove(event) {
         highlightModelPart(event, selectionMaterial, previousSelectionID)
     }
     if (selectedTool == AVAILABLE_TOOLS.annotating && annotationPoints.length > 0) {
-        let found = castRay(event, ...annotationPoints)[0]
-        if (found && !isCreatingAnnotation) {
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        let found = raycaster.intersectObjects(annotationPoints)[0]
+        if (found && !isCreatingAnnotation && !isAnnotationDisplayShown) {
             found = found.object
             let position = found.position.clone().project(camera)
             annotationDisplay.style.top = ((position.y * -1 + 1) * size.height / 2) + 'px'
@@ -179,8 +191,8 @@ function onPointerMove(event) {
             annotationDisplay.classList.add('is-active')
             annotationDisplay.innerHTML = found.name
             isAnnotationDisplayShown = true
-            console.log(((position.y * -1 + 1) * size.height / 2) + 'px');
-        } else if (isAnnotationDisplayShown) {
+        }
+        if (!found && isAnnotationDisplayShown) {
             isAnnotationDisplayShown = false
             annotationDisplay.classList.remove('is-active')
         }
@@ -341,7 +353,6 @@ function toggleAnnotating() {
             annotationForm.classList.add('is-active')
         annotatingButton.classList.add('is-active')
         annotatingButton.children[0].classList.add('is-active')
-        annotationHint.innerHTML = "Click a part of the model to tag it"
         annotationPoints.forEach(point => point.visible = true)
     } else {
         annotationHint.classList.remove('is-active')

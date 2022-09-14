@@ -30,12 +30,20 @@
     </header>
     <canvas id="three-canvas"></canvas>
     <div id="model-info"></div>
-    <div id="annotation-hint"></div>
+    <div id="annotation-hint">
+        <span class="material-icons"
+            style="color: black; background-color: white; margin-right: 6px; float: left;">comment</span>
+        Click a part of
+        the model to tag it
+    </div>
     <div id="annotation-display">Tag Data</div>
     <div id="annotation-form">
-        <textarea name="comment" id="annotation-comment" cols="20" rows="5"></textarea>
+        <textarea name="comment" placeholder="Description..." id="annotation-comment" cols="20" rows="5"></textarea>
+        <button id="cancel-annotation-button">
+            <span class="material-icons" style="color: white; margin-right: 6px; float: left;">cancel</span> CANCEL
+        </button>
         <button id="save-annotation-button">
-            <span class="material-icons" style="color: white; float: left;">save</span> ADD TAG
+            <span class="material-icons" style="color: white; margin-right: 6px; float: left;">save</span> ADD TAG
         </button>
     </div>
     <script src="bundle.js"></script>

@@ -115,7 +115,7 @@ input[type="file"] {
 #annotation-hint {
   text-align: center;
   visibility: hidden;
-  color: white;
+  background: white;
   border: 2px solid white;
   padding: 6px 12px;
   border-radius: 4px;
@@ -124,8 +124,6 @@ input[type="file"] {
   bottom: 25px;
   left: 50%;
   transform: translate(-50%, 0);
-  font-size: 24px;
-  font-weight: 700;
 }
 
 #annotation-hint.is-active {
@@ -137,7 +135,7 @@ input[type="file"] {
   text-align: center;
   visibility: hidden;
   background-color: white;
-  padding: 6px 12px;
+  padding: 12px 12px;
   border-radius: 4px;
   z-index: 3 !important;
   position: absolute;
@@ -146,23 +144,33 @@ input[type="file"] {
 }
 
 #annotation-comment{
-  grid-column: 1;
+  grid-column: 1 / span 2;
   grid-row: 1;
-  background-color: white;
-  border-radius: 10px 10px 0px 0px;
+  background-color: #f0f0f0;
+  padding: 4px;
   color: black;
   border: 2px solid black;
   margin-bottom: 6px;
-  text-align: center;
+  text-align: left;
   resize: none;
 }
 #save-annotation-button{
+  grid-column: 2;
+  grid-row: 2;
+  background-color: #242424;
+  border-radius: 6px;
+  color: white;
+  padding: 4px 12px;
+  text-align: center;
+  margin-left: 6px;
+}
+#cancel-annotation-button{
   grid-column: 1;
   grid-row: 2;
   background-color: #242424;
   border-radius: 6px;
   color: white;
-  padding: 6px 12px;
+  padding: 4px 12px;
   text-align: center;
 }
 
