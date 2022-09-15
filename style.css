@@ -6,12 +6,16 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 18px;
   font-weight: 500;
-  color: black;
+  color: #242424;
 }
 
 html,
 body {
   overflow: hidden;
+}
+b{
+  background-color: white;
+  font-weight: 700;
 }
 
 #three-canvas {
@@ -35,7 +39,7 @@ input[type="file"] {
 }
 
 .custom-icon {
-  color: black;
+  color: #242424;
   background-color: white;
 }
 
@@ -68,7 +72,7 @@ input[type="file"] {
   border-radius: 4px;
   position: absolute;
   top: 25%;
-  right: 110%;
+  right: 105%;
 }
 
 .custom-button .tooltiptext::after {
@@ -151,7 +155,7 @@ input[type="file"] {
   grid-row: 1;
   background-color: #f0f0f0;
   padding: 4px;
-  color: black;
+  color: #242424;
   border: 2px solid #242424;
   border-radius: 4px;
   margin-bottom: 6px;
@@ -188,7 +192,7 @@ input[type="file"] {
   top: 0;
   left: 0;
   background-color: white;
-  border: 2px solid black;
+  border: 2px solid #242424;
   border-radius: 4px;
   padding: 10px;
   transition: opacity 0.3s, transform 0.3s;
@@ -206,7 +210,7 @@ input[type="file"] {
   text-align: center;
   visibility: hidden;
   background-color: white;
-  padding: 12px 12px;
+  padding: 6px 8px;
   border-radius: 4px;
   z-index: 3 !important;
   position: absolute;
@@ -220,11 +224,15 @@ input[type="file"] {
 .help-label{
   grid-column: 2;
   background-color: white;
-  text-align: center;
+  align-self: center;
+  text-align: start;
+  margin: 0px 12px;
+  font-size: 16px;
 }
 
 .help-image{
   background-color: white;
   grid-column: 1;
-  text-align: center;
+  align-self: center;
+  margin: 6px 0px;
 }
