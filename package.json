@@ -1,7 +1,7 @@
 {
   "name": "ifc-three-js-viewer",
   "version": "1.0.0",
-  "description": "This is a IFC wrapped on Three js based viewer, I think..",
+  "description": "This is an IFC wrapped on Three js based viewer, I think..",
   "main": "app.js",
   "scripts": {
     "build": "rollup -c ./rollup.config.js",

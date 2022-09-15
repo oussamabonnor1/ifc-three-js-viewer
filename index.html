@@ -26,24 +26,39 @@
         <label id="annotating-button" class="custom-button" title="Annotation">
             <span class="custom-icon material-icons">comment</span>
         </label>
-
+        <label id="help-button" class="custom-button" title="Help">
+            <span class="custom-icon material-icons">help</span>
+        </label>
     </header>
     <canvas id="three-canvas"></canvas>
     <div id="model-info"></div>
-    <div id="annotation-hint">
+    <div id="help-panel">
+        <img src="static/mouse-left.png" width="40" alt="" class="help-image">
+        <span class="help-label">Left Click + Move => <b>Rotate</b></span>
+        <img src="static/mouse-left.png" width="40" alt="" class="help-image" style="transform: scale(-1,1);">
+        <span class="help-label">Right Click + Move => <b>Pan</b></span>
+        <img src="static/mouse-wheel.png" width="40" alt="" class="help-image">
+        <span class="help-label">Scroll => <b>Zoom</b></span>
+    </div>
+    <div id="annotation-hint" class="custom-hint">
         <span class="material-icons"
-            style="color: black; background-color: white; margin-right: 6px; float: left;">comment</span>
-        Click a part of
-        the model to tag it
+            style="color: #242424; background-color: white; margin-right: 6px; float: left;">comment</span>
+        Click a part of the model to tag it
+    </div>
+    <div id="measuring-hint" class="custom-hint">
+        <span class="material-icons"
+            style="color: #242424; background-color: white; margin-right: 6px; float: left;">straighten</span>
+        Click on the model to start measuring
     </div>
     <div id="annotation-display">Tag Data</div>
     <div id="annotation-form">
         <textarea name="comment" placeholder="Description..." id="annotation-comment" cols="20" rows="5"></textarea>
         <button id="cancel-annotation-button">
-            <span class="material-icons" style="color: white; margin-right: 6px; float: left;">cancel</span> CANCEL
+            <span class="material-icons" style="color: white;  margin-right: 6px; float: left;">cancel</span> CANCEL
         </button>
         <button id="save-annotation-button">
-            <span class="material-icons" style="color: white; margin-right: 6px; float: left;">save</span> ADD TAG
+            <span class="material-icons" style="color: white; 
+            background-color: #F7C702; margin-right: 6px; float: left;">save</span> ADD TAG
         </button>
     </div>
     <script src="bundle.js"></script>

@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, BufferAttribute, BufferGeometry, DirectionalLight, GridHelper, Line, LineBasicMaterial, PerspectiveCamera, Points, PointsMaterial, Raycaster, Scene, Sprite, SpriteMaterial, TextureLoader, Vector2, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, BoxGeometry, BufferAttribute, BufferGeometry, DirectionalLight, Euler, GridHelper, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, PointLight, Points, PointsMaterial, Raycaster, Scene, Sprite, SpriteMaterial, TextureLoader, Vector2, Vector3, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
     CSS2DRenderer,
@@ -8,12 +8,14 @@ import { IFCLoader } from "web-ifc-three/IFCLoader";
 import { acceleratedRaycast, computeBoundsTree, disposeBoundsTree } from "three-mesh-bvh";
 import { MeshLambertMaterial } from "three";
 
+const measuringHint = document.getElementById("measuring-hint")
 const measuringButton = document.getElementById("measuring-button")
 measuringButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.measuring ? undefined : AVAILABLE_TOOLS.measuring
     toggleMeasuring()
     togglePicking()
     toggleAnnotating()
+    toggleHelp()
 })
 
 const pickingButton = document.getElementById("picking-button")
@@ -22,6 +24,7 @@ pickingButton.addEventListener("click", () => {
     togglePicking()
     toggleMeasuring()
     toggleAnnotating()
+    toggleHelp()
 })
 
 const annotatingButton = document.getElementById("annotating-button")
@@ -30,7 +33,18 @@ annotatingButton.addEventListener("click", () => {
     toggleAnnotating()
     togglePicking()
     toggleMeasuring()
+    toggleHelp()
 })
+
+const helpButton = document.getElementById("help-button")
+helpButton.addEventListener("click", () => {
+    selectedTool = selectedTool == AVAILABLE_TOOLS.helping ? undefined : AVAILABLE_TOOLS.helping
+    toggleHelp()
+    toggleAnnotating()
+    togglePicking()
+    toggleMeasuring()
+})
+const helpPanel = document.getElementById("help-panel")
 
 const modelInfo = document.getElementById("model-info")
 const annotationHint = document.getElementById("annotation-hint")
@@ -39,14 +53,12 @@ const annotationTextField = document.getElementById("annotation-comment")
 const annotationSaveButton = document.getElementById("save-annotation-button")
 const annotationCancelButton = document.getElementById("cancel-annotation-button")
 const annotationDisplay = document.getElementById('annotation-display')
-
 annotationSaveButton.addEventListener("click", () => {
     isCreatingAnnotation = false
     annotationForm.classList.remove('is-active')
     annotationPoints[annotationPoints.length - 1].name = annotationTextField.value
     annotationTextField.value = ""
 })
-
 annotationCancelButton.addEventListener("click", () => {
     isCreatingAnnotation = false
     annotationForm.classList.remove('is-active')
@@ -62,6 +74,7 @@ const AVAILABLE_TOOLS = {
     measuring: "measuring",
     picking: "picking",
     annotating: "annotating",
+    helping: "helping",
 }
 let selectedTool = undefined
 
@@ -317,9 +330,11 @@ function castRay(event, target) {
 function toggleMeasuring() {
     if (selectedTool == AVAILABLE_TOOLS.measuring) {
         measuringButton.classList.add('is-active')
+        measuringHint.classList.add('is-active')
         measuringButton.children[0].classList.add('is-active')
     } else {
         measuringButton.classList.remove('is-active')
+        measuringHint.classList.remove('is-active')
         measuringButton.children[0].classList.remove('is-active')
         const measuringLabels = document.querySelectorAll("measurementLabel")
         measuringLabels.forEach(label => label.remove());
@@ -360,6 +375,17 @@ function toggleAnnotating() {
         annotatingButton.classList.remove('is-active')
         annotatingButton.children[0].classList.remove('is-active')
         annotationPoints.forEach(point => point.visible = false)
+    }
+}
+function toggleHelp() {
+    if (selectedTool == AVAILABLE_TOOLS.helping) {
+        helpPanel.classList.add('is-active')
+        helpButton.classList.add('is-active')
+        helpButton.children[0].classList.add('is-active')
+    } else {
+        helpPanel.classList.remove('is-active')
+        helpButton.classList.remove('is-active')
+        helpButton.children[0].classList.remove('is-active')
     }
 }
 

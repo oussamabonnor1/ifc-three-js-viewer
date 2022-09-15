@@ -6,12 +6,16 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 18px;
   font-weight: 500;
-  color: black;
+  color: #242424;
 }
 
 html,
 body {
   overflow: hidden;
+}
+b{
+  background-color: white;
+  font-weight: 700;
 }
 
 #three-canvas {
@@ -35,13 +39,13 @@ input[type="file"] {
 }
 
 .custom-icon {
-  color: black;
+  color: #242424;
   background-color: white;
 }
 
 .custom-icon.is-active {
   color: white;
-  background-color: #2196F3;
+  background-color: #F7C702;
 }
 
 .custom-button {
@@ -55,8 +59,8 @@ input[type="file"] {
 }
 
 .custom-button.is-active {
-  border: 1px solid #2196F3;
-  background-color: #2196F3;
+  border: 1px solid #F7C702;
+  background-color: #F7C702;
 }
 
 /* Tooltip text */
@@ -68,7 +72,7 @@ input[type="file"] {
   border-radius: 4px;
   position: absolute;
   top: 25%;
-  right: 110%;
+  right: 105%;
 }
 
 .custom-button .tooltiptext::after {
@@ -112,7 +116,7 @@ input[type="file"] {
   visibility: visible !important;
 }
 
-#annotation-hint {
+.custom-hint {
   text-align: center;
   visibility: hidden;
   background: white;
@@ -126,6 +130,9 @@ input[type="file"] {
   transform: translate(-50%, 0);
 }
 
+#measuring-hint.is-active {
+  visibility: visible !important;
+}
 #annotation-hint.is-active {
   visibility: visible !important;
 }
@@ -148,8 +155,9 @@ input[type="file"] {
   grid-row: 1;
   background-color: #f0f0f0;
   padding: 4px;
-  color: black;
-  border: 2px solid black;
+  color: #242424;
+  border: 2px solid #242424;
+  border-radius: 4px;
   margin-bottom: 6px;
   text-align: left;
   resize: none;
@@ -157,8 +165,9 @@ input[type="file"] {
 #save-annotation-button{
   grid-column: 2;
   grid-row: 2;
-  background-color: #242424;
+  background-color: #F7C702;
   border-radius: 6px;
+  border-width: 0px;
   color: white;
   padding: 4px 12px;
   text-align: center;
@@ -183,7 +192,7 @@ input[type="file"] {
   top: 0;
   left: 0;
   background-color: white;
-  border: 2px solid black;
+  border: 2px solid #242424;
   border-radius: 4px;
   padding: 10px;
   transition: opacity 0.3s, transform 0.3s;
@@ -194,4 +203,36 @@ input[type="file"] {
 #annotation-display.is-active{
   opacity: 1;
   transform: translate(-50%,calc(-160%));
+}
+
+#help-panel{
+  display: grid;
+  text-align: center;
+  visibility: hidden;
+  background-color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  z-index: 3 !important;
+  position: absolute;
+  right: 10px;
+  top: 60px;
+}
+#help-panel.is-active{
+  visibility: visible;
+}
+
+.help-label{
+  grid-column: 2;
+  background-color: white;
+  align-self: center;
+  text-align: start;
+  margin: 0px 12px;
+  font-size: 16px;
+}
+
+.help-image{
+  background-color: white;
+  grid-column: 1;
+  align-self: center;
+  margin: 6px 0px;
 }
