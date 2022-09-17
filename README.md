@@ -32,7 +32,7 @@ Hover on any tag to display it's message.
 
 ![image](https://user-images.githubusercontent.com/17766221/190875440-12dd6c82-68ce-4ac1-bef0-34ac019d485d.png)
 
-Feel free to use your own model.
+Feel free to use your own model. Models for testing available [here](https://github.com/oussamabonnor1/ifc-three-js-viewer/tree/main/models).
 
 ![image](https://user-images.githubusercontent.com/17766221/190875482-0734a898-68ad-4e4f-8ce0-ec73bbb0da0e.png)
 
