@@ -51,7 +51,7 @@ $ npm run watch
 ```
 
 ## serve using vscode live server (or a similar approach, like http-server)
-[VSCode Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
+* [VSCode Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 
 ## Disclaimer:
 The code is a mess.
