@@ -130,6 +130,9 @@ input[type="file"] {
   transform: translate(-50%, 0);
 }
 
+#hidding-hint.is-active {
+  visibility: visible !important;
+}
 #measuring-hint.is-active {
   visibility: visible !important;
 }

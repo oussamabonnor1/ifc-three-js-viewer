@@ -103499,10 +103499,22 @@ class IFCLoader extends Loader {
 
 }
 
+const hiddingHint = document.getElementById("hidding-hint");
+const hiddingButton = document.getElementById("hidding-button");
+hiddingButton.addEventListener("click", () => {
+    selectedTool = selectedTool == AVAILABLE_TOOLS.hidding ? undefined : AVAILABLE_TOOLS.hidding;
+    toggleHidding();
+    toggleMeasuring();
+    togglePicking();
+    toggleAnnotating();
+    toggleHelp();
+});
+
 const measuringHint = document.getElementById("measuring-hint");
 const measuringButton = document.getElementById("measuring-button");
 measuringButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.measuring ? undefined : AVAILABLE_TOOLS.measuring;
+    toggleHidding();
     toggleMeasuring();
     togglePicking();
     toggleAnnotating();
@@ -103512,6 +103524,7 @@ measuringButton.addEventListener("click", () => {
 const pickingButton = document.getElementById("picking-button");
 pickingButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.picking ? undefined : AVAILABLE_TOOLS.picking;
+    toggleHidding();
     togglePicking();
     toggleMeasuring();
     toggleAnnotating();
@@ -103521,6 +103534,7 @@ pickingButton.addEventListener("click", () => {
 const annotatingButton = document.getElementById("annotating-button");
 annotatingButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.annotating ? undefined : AVAILABLE_TOOLS.annotating;
+    toggleHidding();
     toggleAnnotating();
     togglePicking();
     toggleMeasuring();
@@ -103530,6 +103544,7 @@ annotatingButton.addEventListener("click", () => {
 const helpButton = document.getElementById("help-button");
 helpButton.addEventListener("click", () => {
     selectedTool = selectedTool == AVAILABLE_TOOLS.helping ? undefined : AVAILABLE_TOOLS.helping;
+    toggleHidding();
     toggleHelp();
     toggleAnnotating();
     togglePicking();
@@ -103562,6 +103577,7 @@ let isCreatingAnnotation = false;
 let isAnnotationDisplayShown = false;
 let measuringEntities = [];
 const AVAILABLE_TOOLS = {
+    hidding: "hidding",
     measuring: "measuring",
     picking: "picking",
     annotating: "annotating",
@@ -103669,6 +103685,9 @@ function onPointerClick(event) {
     }
     if (selectedTool == AVAILABLE_TOOLS.picking) {
         pickModelPart(event);
+    }
+    if (selectedTool == AVAILABLE_TOOLS.hidding) {
+        hideModelPart(event);
     }
     if (selectedTool == AVAILABLE_TOOLS.annotating) {
         if (intersects.length > 0 && !isCreatingAnnotation) {
@@ -103799,6 +103818,26 @@ async function pickModelPart(event) {
     }
 }
 
+async function hideModelPart(event) {
+    const found = castRay(event, model)[0];
+    if (found) {
+        const index = found.faceIndex;
+        const geometry = found.object.geometry;
+        const ifc = ifcLoader.ifcManager;
+        const id = ifc.getExpressId(geometry, index);
+        if (previousSelectionID) ifc.removeSubset(previousSelectionID.id, selectionMaterial);
+        previousSelectionID.id = found.object.modelID;
+        const subset = ifcLoader.ifcManager.createSubset({
+            modelID: previousSelectionID.id,
+            ids: [id],
+            material: selectionMaterial,
+            scene: scene,
+            removePrevious: true,
+        });
+        scene.remove(subset);
+    }
+}
+
 function addAnnotationPoint(point) {
     isCreatingAnnotation = true;
     let map = new TextureLoader().load('static/info.png');
@@ -103816,6 +103855,18 @@ function castRay(event, target) {
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     return raycaster.intersectObjects([target]);
+}
+
+function toggleHidding() {
+    if (selectedTool == AVAILABLE_TOOLS.hidding) {
+        hiddingButton.classList.add('is-active');
+        hiddingHint.classList.add('is-active');
+        hiddingButton.children[0].classList.add('is-active');
+    } else {
+        hiddingButton.classList.remove('is-active');
+        hiddingHint.classList.remove('is-active');
+        hiddingButton.children[0].classList.remove('is-active');
+    }
 }
 
 function toggleMeasuring() {
